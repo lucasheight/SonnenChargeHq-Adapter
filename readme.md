@@ -1,8 +1,10 @@
-# Sonnen Batterie - ChargHq Integration
+# Sonnen Batterie - ChargeHq Integration
 
 This integration allows smart charging of your EV with [Sonnen Solar Batterie](https://sonnen.com.au/) and [ChargeHq](https://chargehq.net/).
 
-I have decided to use Microsoft .Net7 for this integration, but it would also be quite easy to port to other environments.
+Coded in Microsoft .Net7 for this integration, but it would also be quite easy to port to other environments.
+
+This integration assumes that Sonnen API v2 is used.
 
 ## Setup
 
