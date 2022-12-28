@@ -6,16 +6,22 @@ public class Worker : BackgroundService
     private readonly ILogger<Worker> _logger;
     private readonly IConfiguration _config;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly int _refreshMs = 60000;
 
     public Worker(ILogger<Worker> logger, IConfiguration configuration, IHttpClientFactory httpClientFactory)
     {
         _logger = logger;
         _config = configuration;
         _httpClientFactory = httpClientFactory;
+        if (int.TryParse(configuration["ChargeHq:RefreshMs"], out int result))
+        {
+            _refreshMs = result;
+        };
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+
         _logger.LogInformation("sonnen-chargehq-service started at: {time}", DateTimeOffset.Now);
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -61,7 +67,7 @@ public class Worker : BackgroundService
 
 
 
-            await Task.Delay(60000, stoppingToken);
+            await Task.Delay(_refreshMs, stoppingToken);
         }
     }
     public override async Task StopAsync(CancellationToken cancellationToken)

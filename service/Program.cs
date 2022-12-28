@@ -5,13 +5,13 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddHostedService<Worker>();
         services.AddHttpClient("Sonnen", httpClient =>
         {
-            var url = context.Configuration["Sonnen:BaseUrl"]?.ToString();
-            httpClient.BaseAddress = new Uri($"{url}api/v2/");
+            Uri baseUri = new Uri(context.Configuration["Sonnen:BaseUrl"] ?? "http://localhost");
+            httpClient.BaseAddress = new Uri(baseUri, "api/v2/");
         });
         services.AddHttpClient("ChargeHq", httpClient =>
         {
-            var url = context.Configuration["ChargeHq:BaseUrl"]?.ToString();
-            httpClient.BaseAddress = new Uri(url);
+            var baseUri = new Uri(context.Configuration["ChargeHq:BaseUrl"]?.ToString());
+            httpClient.BaseAddress = new Uri(baseUri, "api/public/");
         });
 
     }).Build();

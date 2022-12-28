@@ -9,8 +9,14 @@
     <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
     <PublishProfile>DefaultContainer</PublishProfile> -->
     <ContainerImageName>sonnen-chargehq-service</ContainerImageName>
-  </PropertyGroup>
 
+  </PropertyGroup>
+  <ItemGroup>
+    <ContainerEnvironmentVariable Include="Sonnen__BaseUrl" Value="http://localhost" />
+    <ContainerEnvironmentVariable Include="ChargeHq__BaseUrl" Value="https://api.chargehq.net" />
+    <ContainerEnvironmentVariable Include="ChargeHq__ApiKey" Value="" />
+    <ContainerEnvironmentVariable Include="ChargeHq__RefreshMs" Value="120000" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="7.0.0" />
