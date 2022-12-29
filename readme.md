@@ -2,7 +2,7 @@
 
 This integration allows smart charging of your EV with [Sonnen Solar Batterie](https://sonnen.com.au/) and [ChargeHq](https://chargehq.net/).
 
-Coded in Microsoft .Net7 for this integration, but it would also be quite easy to port to other environments.
+Coded in Microsoft .Net7, it would also be quite easy to port to other environments.
 
 This integration assumes that Sonnen API v2 is used.
 
@@ -43,7 +43,7 @@ More details can be found here. [https://chargehq.net/kb/push-api](https://charg
 
 ## Docker
 
-If you want to run a docker container, they you can use the [publish.sh](./service/publish.sh) script to create a linux build/docker image.
+If you want to run a docker container, then, you can use the [publish.sh](./service/publish.sh) script to create a linux build/docker image.
 
 ### Exporting the docker image
 
