@@ -1,5 +1,6 @@
 namespace service;
 using System.Text.Json;
+using System.Reflection;
 using static System.Net.Mime.MediaTypeNames;
 public class Worker : BackgroundService
 {
@@ -7,6 +8,7 @@ public class Worker : BackgroundService
     private readonly IConfiguration _config;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly int _refreshMs = 60000;
+    private readonly string serviceName;
 
     public Worker(ILogger<Worker> logger, IConfiguration configuration, IHttpClientFactory httpClientFactory)
     {
@@ -17,12 +19,13 @@ public class Worker : BackgroundService
         {
             _refreshMs = result;
         };
+        serviceName = Assembly.GetEntryAssembly().GetName().Name ?? "service";
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
 
-        _logger.LogInformation("sonnen-chargehq-service started at: {time}", DateTimeOffset.Now);
+        _logger.LogInformation("{name} started at: {time}", serviceName, DateTimeOffset.Now);
         while (!stoppingToken.IsCancellationRequested)
         {
 
@@ -72,7 +75,7 @@ public class Worker : BackgroundService
     }
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("sonnen-chargehq-service is stopping: {time}", DateTimeOffset.Now);
+        _logger.LogInformation("{name} is stopping: {time}", serviceName, DateTimeOffset.Now);
         await base.StopAsync(cancellationToken);
     }
 
