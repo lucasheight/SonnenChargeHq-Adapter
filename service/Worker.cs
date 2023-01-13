@@ -43,7 +43,7 @@ public class Worker : BackgroundService
                     consumption_kw = Convert.ToDecimal(stat.Consumption_W) / 1000,
                     production_kw = Convert.ToDecimal(stat.Production_W) / 1000,
                     net_import_kw = Convert.ToDecimal(-stat.GridFeedIn_W) / 1000,
-                    battery_soc = Convert.ToDecimal(stat.RSOC) / 100,
+                    battery_soc = Convert.ToDecimal(stat.USOC) / 100,
                     battery_discharge_kw = Convert.ToDecimal(stat.Pac_total_W) / 1000
                 };
 

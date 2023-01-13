@@ -1,6 +1,6 @@
 namespace service;
 using System.Text.Json.Serialization;
-public class chargeHq
+public struct chargeHq
 {
     public string apiKey { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -18,7 +18,7 @@ public class chargeHq
 
 
 }
-public class siteMeters
+public struct siteMeters
 {
     // if a consumption meter is present, the following fields should be set
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]

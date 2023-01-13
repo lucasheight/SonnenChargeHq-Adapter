@@ -1,9 +1,7 @@
 namespace service;
-public class status
+public struct status
+
 {
-
-
-
     public int Apparent_output { get; set; }// 4597,
 
     public string BackupBuffer { get; set; }// "0",
