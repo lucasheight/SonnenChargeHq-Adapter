@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/joho/godotenv"
 )
 
 var (
@@ -39,19 +38,15 @@ func poll() {
 		worker()
 	}
 }
-func worker() int {
+func worker() {
 	sonnenData, e, statusCode := readSonnen()
 	if e != nil {
 		err.Fatal(err)
-
 	}
 	if statusCode != 200 {
 		warn.Printf("%d: %+v \n", statusCode, sonnenData)
-
 	}
-	//info.Printf("%+v \n", sonnenData)
 	publishData(sonnenData, e, statusCode)
-	return statusCode
 }
 func publishData(data SonnenStatus, err error, statusCode int) error {
 	mapped := mapData(data, err)
@@ -75,7 +70,6 @@ func publishData(data SonnenStatus, err error, statusCode int) error {
 	}
 	h := &http.Client{}
 	resp, e := h.Post(ChargeHqBaseUrl+"/api/public/push-solar-data", "application/json", &postBuffer)
-
 	if e != nil {
 		return e
 	}
@@ -83,23 +77,18 @@ func publishData(data SonnenStatus, err error, statusCode int) error {
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("%s", resp.Status)
 	}
-
 	info.Printf("ChargeHq data sent: %+v \n", mapped)
 	return nil
-
 }
 func readSonnen() (SonnenStatus, error, int) {
 	sonnenClient := &http.Client{}
 	var req *http.Response
 	var err error
 	req, err = sonnenClient.Get(getEnv(SonnenBaseUrl) + "/api/v2/status/")
-	//req.Body = http.MaxBytesReader(w, req.Body, 1048576)
 	if err != nil {
 		return SonnenStatus{}, err, req.StatusCode
 	}
-
 	defer req.Body.Close()
-	//body, err := io.ReadAll(req.Body)
 	sonnenData := new(SonnenStatus)
 	dec := json.NewDecoder(req.Body)
 	err = dec.Decode(&sonnenData)
@@ -107,11 +96,9 @@ func readSonnen() (SonnenStatus, error, int) {
 		req.StatusCode = 500
 	}
 	info.Printf("Sonnen data read: %+v \n", *sonnenData)
-
 	return *sonnenData, err, req.StatusCode
 }
 func mapData(data SonnenStatus, err error) ChargeHq {
-
 	ch := new(ChargeHq)
 	ch.apiKey = getEnv(ChargeHqApiKey)
 	if err != nil {
@@ -124,7 +111,6 @@ func mapData(data SonnenStatus, err error) ChargeHq {
 		battery_soc:          float32(data.USOC) / 100,
 		battery_discharge_kw: float32(data.Pac_total_W) / 1000}
 	return *ch
-
 }
 func getEnv(key string) string {
 	e := godotenv.Load(".env")
@@ -134,7 +120,6 @@ func getEnv(key string) string {
 	val, hasVal := os.LookupEnv(key)
 	if !hasVal {
 		defer err.Fatal(MissingEnv)
-		//log.Fatalf("Unable to find %s environment variable. Terminating process!.", key)
 	}
 
 	return val
