@@ -13,9 +13,10 @@ import (
 )
 
 var (
-	info *log.Logger
-	warn *log.Logger
-	err  *log.Logger
+	info     *log.Logger
+	warn     *log.Logger
+	err      *log.Logger
+	useOsEnv bool = false
 )
 
 func init() {
@@ -25,6 +26,7 @@ func init() {
 }
 func main() {
 	info.Printf("%s has started \n", ServiceName)
+
 	poll()
 }
 func poll() {
@@ -113,9 +115,12 @@ func mapData(data SonnenStatus, err error) ChargeHq {
 	return *ch
 }
 func getEnv(key string) string {
-	e := godotenv.Load(".env")
-	if e != nil {
-		warn.Println("Unable to load .env file, will try OS environment.")
+	if !useOsEnv {
+		e := godotenv.Load(".env")
+		if e != nil {
+			warn.Println("Unable to load .env file, will try OS environment.")
+			useOsEnv = true
+		}
 	}
 	val, hasVal := os.LookupEnv(key)
 	if !hasVal {
