@@ -2,11 +2,13 @@
 
 This integration allows smart charging of your EV with [Sonnen Solar Batterie](https://sonnen.com.au/) and [ChargeHq](https://chargehq.net/).
 
-Coded in Microsoft .Net7, it would also be quite easy to port to other environments.
+There are implementations in both [Golang](./goService/) and [.NET core](./service/) with dockerfiles for both.
 
-This integration assumes that Sonnen API v2 is used.
+Also note, this integration assumes that Sonnen API v2 is used.
 
 ## Setup
+
+### .NET
 
 If running as .Net7 service update the [appsettings.json](./service/appsettings.json) with your relevant urls and keys and compile to your target
 platform:
@@ -20,6 +22,17 @@ platform:
     "ApiKey": "YourApiKey",
     "RefreshMs":"120000" //optional- defaults to 2 mins
   }
+
+```
+
+### GO
+
+Create a .env file in the goService folder with the following settings:
+
+```env
+ SONNEN__BASEURL=http://localhost
+ CHARGEHQ__APIKEY=your_api_key
+ CHARGEHQ__REFRESHMS=120000 (optional)
 
 ```
 
@@ -43,7 +56,7 @@ More details can be found here. [https://chargehq.net/kb/push-api](https://charg
 
 ## Docker
 
-If you want to run a docker container, then, you can use the [publish.sh](./service/publish.sh) script to create a linux build/docker image.
+If you want to run a docker container, then, you can use the [publish.sh](./service/publish.sh) scripts to create a linux build/docker images.
 
 ### Exporting the docker image
 
@@ -55,7 +68,7 @@ directory. I use this to run the container on my Synolgy NAS.
 If using docker, add the following docker environment Variables for your configuration:
 
 ```docker
-Sonnen__BaseUrl=http://your_local_sonnen_address
-ChargeHq__ApiKey=Your_Api_Key
+SONNEN__BASEURL=http://your_local_sonnen_address
+CHARGEHQ__APIKEY=Your_Api_Key
 
 ```
