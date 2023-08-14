@@ -75,7 +75,7 @@ func publishData(data SonnenStatus, err error, statusCode int) error {
 		return err
 	}
 	h := &http.Client{}
-	var endpointUrl = ChargeHqBaseUrl + "/api/public/push-solar-data2"
+	var endpointUrl = ChargeHqBaseUrl + "/api/public/push-solar-data"
 	resp, e := h.Post(endpointUrl, "application/json", &postBuffer)
 	if e != nil {
 		return e
