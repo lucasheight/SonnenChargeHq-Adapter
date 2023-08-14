@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/joho/godotenv"
 	"log"
@@ -48,7 +49,10 @@ func worker() {
 	if statusCode != 200 {
 		warn.Printf("%d: %+v \n", statusCode, sonnenData)
 	}
-	publishData(sonnenData, e, statusCode)
+	var er = publishData(sonnenData, e, statusCode)
+	if er != nil {
+		warn.Printf("%s \n", er.Error())
+	}
 }
 func publishData(data SonnenStatus, err error, statusCode int) error {
 	mapped := mapData(data, err)
@@ -71,13 +75,14 @@ func publishData(data SonnenStatus, err error, statusCode int) error {
 		return err
 	}
 	h := &http.Client{}
-	resp, e := h.Post(ChargeHqBaseUrl+"/api/public/push-solar-data", "application/json", &postBuffer)
+	var endpointUrl = ChargeHqBaseUrl + "/api/public/push-solar-data2"
+	resp, e := h.Post(endpointUrl, "application/json", &postBuffer)
 	if e != nil {
 		return e
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("%s", resp.Status)
+		return errors.New(fmt.Sprintf("StatusCode:%d, Status:%s => %s", resp.StatusCode, resp.Status, endpointUrl))
 	}
 	info.Printf("ChargeHq data sent: %+v \n", mapped)
 	return nil
@@ -86,7 +91,9 @@ func readSonnen() (SonnenStatus, error, int) {
 	sonnenClient := &http.Client{}
 	var req *http.Response
 	var err error
-	req, err = sonnenClient.Get(getEnv(SonnenBaseUrl) + "/api/v2/status/")
+	var theUrl = getEnv(SonnenBaseUrl) + "/api/v2/status/"
+	req, err = sonnenClient.Get(theUrl)
+
 	if err != nil {
 		return SonnenStatus{}, err, req.StatusCode
 	}
