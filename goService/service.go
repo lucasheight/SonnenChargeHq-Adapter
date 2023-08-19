@@ -3,8 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"github.com/joho/godotenv"
 	"log"
 	"net/http"
@@ -35,10 +33,10 @@ func poll() {
 	if err != nil {
 		ms = ChargeHqDefaultRefreshMs
 	}
-	worker()
+	go worker()
 	interval := time.Tick(time.Duration(ms) * time.Millisecond)
 	for _ = range interval {
-		worker()
+		go worker()
 	}
 }
 func worker() {
@@ -49,12 +47,15 @@ func worker() {
 	if statusCode != 200 {
 		warn.Printf("%d: %+v \n", statusCode, sonnenData)
 	}
-	var er = publishData(sonnenData, e, statusCode)
+	var er, httpEr = publishData(sonnenData, e, statusCode)
 	if er != nil {
-		warn.Printf("%s \n", er.Error())
+		err.Fatalf("%s \n", er.Error())
+	}
+	if httpEr != nil {
+		warn.Printf("%s; %d: %s => %s", httpEr.method, httpEr.statusCode, httpEr.status, httpEr.url)
 	}
 }
-func publishData(data SonnenStatus, err error, statusCode int) error {
+func publishData(data SonnenStatus, err error, statusCode int) (error, *httpError) {
 	mapped := mapData(data, err)
 	charge := map[string]interface{}{
 		"apiKey": mapped.apiKey}
@@ -72,20 +73,20 @@ func publishData(data SonnenStatus, err error, statusCode int) error {
 	var postBuffer bytes.Buffer
 	err = json.NewEncoder(&postBuffer).Encode(&charge)
 	if err != nil {
-		return err
+		return err, nil
 	}
 	h := &http.Client{}
 	var endpointUrl = ChargeHqBaseUrl + "/api/public/push-solar-data"
 	resp, e := h.Post(endpointUrl, "application/json", &postBuffer)
 	if e != nil {
-		return e
+		return e, nil
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return errors.New(fmt.Sprintf("StatusCode:%d, Status:%s => %s", resp.StatusCode, resp.Status, endpointUrl))
+		return nil, &httpError{method: "POST", url: endpointUrl, status: resp.Status, statusCode: resp.StatusCode} // httperr() errors.New(fmt.Sprintf("StatusCode:%d, Status:%s => %s", resp.StatusCode, resp.Status, endpointUrl))
 	}
 	info.Printf("ChargeHq data sent: %+v \n", mapped)
-	return nil
+	return nil, nil
 }
 func readSonnen() (SonnenStatus, error, int) {
 	sonnenClient := &http.Client{}

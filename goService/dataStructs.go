@@ -73,3 +73,9 @@ type SiteMeters struct {
 	//[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 	battery_energy_kwh float32 //amount of energy in the battery (optional)
 }
+type httpError struct {
+	method     string
+	url        string
+	status     string
+	statusCode int
+}
