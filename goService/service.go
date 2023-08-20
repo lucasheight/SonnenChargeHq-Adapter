@@ -42,7 +42,7 @@ func poll() {
 func worker() {
 	sonnenData, e, statusCode := readSonnen()
 	if e != nil {
-		err.Fatal(err)
+		err.Fatalf("%s \n", e.Error())
 	}
 	if statusCode != 200 {
 		warn.Printf("%d: %+v \n", statusCode, sonnenData)
@@ -55,12 +55,12 @@ func worker() {
 		warn.Printf("%s; %d: %s => %s", httpEr.method, httpEr.statusCode, httpEr.status, httpEr.url)
 	}
 }
-func publishData(data SonnenStatus, err error, statusCode int) (error, *httpError) {
-	mapped := mapData(data, err)
+func publishData(data SonnenStatus, er error, statusCode int) (error, *httpError) {
+	mapped := mapData(data, er)
 	charge := map[string]interface{}{
 		"apiKey": mapped.apiKey}
-	if err != nil {
-		charge["error"] = err.Error()
+	if er != nil {
+		charge["error"] = er.Error()
 	} else {
 		meters := map[string]interface{}{
 			"consumption_kw":       mapped.siteMeters.consumption_kw,
@@ -71,9 +71,9 @@ func publishData(data SonnenStatus, err error, statusCode int) (error, *httpErro
 		charge["siteMeters"] = meters
 	}
 	var postBuffer bytes.Buffer
-	err = json.NewEncoder(&postBuffer).Encode(&charge)
+	er = json.NewEncoder(&postBuffer).Encode(&charge)
 	if err != nil {
-		return err, nil
+		return er, nil
 	}
 	h := &http.Client{}
 	var endpointUrl = ChargeHqBaseUrl + "/api/public/push-solar-data"
