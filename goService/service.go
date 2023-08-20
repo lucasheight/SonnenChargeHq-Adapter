@@ -72,7 +72,7 @@ func publishData(data SonnenStatus, er error, statusCode int) (error, *httpError
 	}
 	var postBuffer bytes.Buffer
 	er = json.NewEncoder(&postBuffer).Encode(&charge)
-	if err != nil {
+	if er != nil {
 		return er, nil
 	}
 	h := &http.Client{}
