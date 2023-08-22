@@ -2,13 +2,16 @@ package main
 
 import (
 	"bytes"
+	//"crypto/subtle"
 	"encoding/json"
-	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
+
+	//"github.com/cenkalti/backoff/v4"
+	"github.com/joho/godotenv"
 )
 
 var (
@@ -39,17 +42,22 @@ func poll() {
 		go worker()
 	}
 }
+
 func worker() {
+
 	sonnenData, e, statusCode := readSonnen()
+
+	// backoff.Retry(operation, backoff.NewExponentialBackOff())
 	if e != nil {
-		err.Fatalf("%s \n", e.Error())
+		err.Printf("Read Data: %s \n", e.Error())
+		return
 	}
 	if statusCode != 200 {
 		warn.Printf("%d: %+v \n", statusCode, sonnenData)
 	}
 	var er, httpEr = publishData(sonnenData, e, statusCode)
 	if er != nil {
-		err.Fatalf("%s \n", er.Error())
+		err.Fatalf("Post Data: %s \n", er.Error())
 	}
 	if httpEr != nil {
 		warn.Printf("%s; %d: %s => %s", httpEr.method, httpEr.statusCode, httpEr.status, httpEr.url)
@@ -81,10 +89,11 @@ func publishData(data SonnenStatus, er error, statusCode int) (error, *httpError
 	if e != nil {
 		return e, nil
 	}
-	defer resp.Body.Close()
+
 	if resp.StatusCode != 200 {
 		return nil, &httpError{method: "POST", url: endpointUrl, status: resp.Status, statusCode: resp.StatusCode} // httperr() errors.New(fmt.Sprintf("StatusCode:%d, Status:%s => %s", resp.StatusCode, resp.Status, endpointUrl))
 	}
+	defer resp.Body.Close()
 	info.Printf("ChargeHq data sent: %+v \n", mapped)
 	return nil, nil
 }
