@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"fmt"
+
 	//"crypto/subtle"
 	"encoding/json"
 	"log"
@@ -18,13 +20,15 @@ var (
 	info     *log.Logger
 	warn     *log.Logger
 	err      *log.Logger
-	useOsEnv bool = false
+	useOsEnv bool   = false
+	apiKey   string = ""
 )
 
 func init() {
 	info = log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime)
 	warn = log.New(os.Stdout, "WARNING: ", log.Ldate|log.Ltime)
 	err = log.New(os.Stdout, "ERROR: ", log.Ldate|log.Ltime)
+	apiKey = getEnv(ChargeHqApiKey)
 }
 func main() {
 	info.Printf("%s has started \n", ServiceName)
@@ -36,101 +40,112 @@ func poll() {
 	if err != nil {
 		ms = ChargeHqDefaultRefreshMs
 	}
-	go worker()
+
+	worker()
 	interval := time.Tick(time.Duration(ms) * time.Millisecond)
-	for _ = range interval {
-		go worker()
+	for range interval {
+		worker()
 	}
 }
 
 func worker() {
+	read := make(chan SonnenStatus)
+	go get(read, "/api/v2/status/")
 
-	sonnenData, e, statusCode := readSonnen()
+	select {
+	case res := <-read:
+		if res.StatusCode != 200 {
+			warn.Printf("GET-%d: %+v \n", res.StatusCode, res.Status)
 
-	// backoff.Retry(operation, backoff.NewExponentialBackOff())
-	if e != nil {
-		err.Printf("Read Data: %s \n", e.Error())
-		return
+		} else {
+			info.Printf("Sonnen data read: %+v \n", res)
+			//now post it
+			go post(res)
+		}
+
+	case <-time.After(time.Second * 5):
+		info.Println("GET timeout received.")
+
+		// default:
+		// 	info.Println("Nothing here - bad?")
 	}
-	if statusCode != 200 {
-		warn.Printf("%d: %+v \n", statusCode, sonnenData)
-	}
-	var er, httpEr = publishData(sonnenData, e, statusCode)
-	if er != nil {
-		err.Fatalf("Post Data: %s \n", er.Error())
-	}
-	if httpEr != nil {
-		warn.Printf("%s; %d: %s => %s", httpEr.method, httpEr.statusCode, httpEr.status, httpEr.url)
-	}
+
 }
-func publishData(data SonnenStatus, er error, statusCode int) (error, *httpError) {
-	mapped := mapData(data, er)
+
+func post(data SonnenStatus) {
+	mapped := func() ChargeHq {
+		ch := ChargeHq{}
+		ch.apiKey = apiKey
+		ch.siteMeters = SiteMeters{
+			consumption_kw:       float32(data.Consumption_W) / 1000,
+			production_kw:        float32(data.Production_W) / 1000,
+			net_import_kw:        float32(-data.GridFeedIn_W) / 1000,
+			battery_soc:          float32(data.USOC) / 100,
+			battery_discharge_kw: float32(data.Pac_total_W) / 1000}
+		return ch
+	}()
 	charge := map[string]interface{}{
 		"apiKey": mapped.apiKey}
-	if er != nil {
-		charge["error"] = er.Error()
-	} else {
-		meters := map[string]interface{}{
-			"consumption_kw":       mapped.siteMeters.consumption_kw,
-			"production_kw":        mapped.siteMeters.production_kw,
-			"net_import_kw":        mapped.siteMeters.net_import_kw,
-			"battery_soc":          mapped.siteMeters.battery_soc,
-			"battery_discharge_kw": mapped.siteMeters.battery_discharge_kw}
-		charge["siteMeters"] = meters
-	}
+
+	meters := map[string]interface{}{
+		"consumption_kw":       mapped.siteMeters.consumption_kw,
+		"production_kw":        mapped.siteMeters.production_kw,
+		"net_import_kw":        mapped.siteMeters.net_import_kw,
+		"battery_soc":          mapped.siteMeters.battery_soc,
+		"battery_discharge_kw": mapped.siteMeters.battery_discharge_kw}
+	charge["siteMeters"] = meters
+
 	var postBuffer bytes.Buffer
-	er = json.NewEncoder(&postBuffer).Encode(charge)
+	er := json.NewEncoder(&postBuffer).Encode(charge)
 	if er != nil {
-		return er, nil
+		warn.Printf("POST-Json encoding: %s \n", er.Error())
+		return
 	}
 	h := http.Client{}
 	var endpointUrl = ChargeHqBaseUrl + "/api/public/push-solar-data"
 	resp, e := h.Post(endpointUrl, "application/json", &postBuffer)
 	if e != nil {
-		return e, nil
+		warn.Printf("POST-Endpoint: %s \n", er.Error())
+		return
 	}
 
 	if resp.StatusCode != 200 {
-		return nil, &httpError{method: "POST", url: endpointUrl, status: resp.Status, statusCode: resp.StatusCode} // httperr() errors.New(fmt.Sprintf("StatusCode:%d, Status:%s => %s", resp.StatusCode, resp.Status, endpointUrl))
+		warn.Printf("POST-%d %s. : %s \n", resp.StatusCode, resp.Status, endpointUrl)
+		return
 	}
 	defer resp.Body.Close()
 	info.Printf("ChargeHq data sent: %+v \n", mapped)
-	return nil, nil
+
 }
-func readSonnen() (SonnenStatus, error, int) {
+func get(read chan<- SonnenStatus, url string) {
 	sonnenClient := http.Client{}
 	var req *http.Response
 	var err error
-	var theUrl = getEnv(SonnenBaseUrl) + "/api/v2/status/"
+	var theUrl = getEnv(SonnenBaseUrl) + url // "/api/v2/statusf/"
 	req, err = sonnenClient.Get(theUrl)
-
-	if err != nil {
-		return SonnenStatus{}, err, req.StatusCode
-	}
-	defer req.Body.Close()
+	//err = errors.New("Really bad error")
+	//time.Sleep(time.Second * 2)
 	sonnenData := SonnenStatus{}
+	if err != nil {
+		sonnenData.StatusCode = 500
+		sonnenData.Status = fmt.Sprintf("Server Error: %s \n", err.Error())
+		read <- sonnenData
+		return
+
+	}
+	sonnenData.StatusCode = req.StatusCode
+	sonnenData.Status = req.Status
+
+	defer req.Body.Close()
+
 	dec := json.NewDecoder(req.Body)
-	err = dec.Decode(&sonnenData)
-	if err != nil {
-		req.StatusCode = 500
+	decError := dec.Decode(&sonnenData)
+	if decError != nil {
+		warn.Printf("Serialisation Error: %s \n", decError.Error())
 	}
-	info.Printf("Sonnen data read: %+v \n", sonnenData)
-	return sonnenData, err, req.StatusCode
+	read <- sonnenData
 }
-func mapData(data SonnenStatus, err error) ChargeHq {
-	ch := new(ChargeHq)
-	ch.apiKey = getEnv(ChargeHqApiKey)
-	if err != nil {
-		ch.error = err.Error()
-	}
-	ch.siteMeters = SiteMeters{
-		consumption_kw:       float32(data.Consumption_W) / 1000,
-		production_kw:        float32(data.Production_W) / 1000,
-		net_import_kw:        float32(-data.GridFeedIn_W) / 1000,
-		battery_soc:          float32(data.USOC) / 100,
-		battery_discharge_kw: float32(data.Pac_total_W) / 1000}
-	return *ch
-}
+
 func getEnv(key string) string {
 	if !useOsEnv {
 		e := godotenv.Load(".env")

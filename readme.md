@@ -61,7 +61,7 @@ If you want to run a docker container, then, you can use the [publish.sh](./serv
 ### Exporting the docker image
 
 To export the docker image, execute the [export.sh](./service/export.sh) script to add a tar archive in the [./service/dist](./service/dist/)
-directory. I use this to run the container on my Synology NAS.
+directory. I use this to run the container on my Synolgy NAS.
 
 ### Environment Settings
 

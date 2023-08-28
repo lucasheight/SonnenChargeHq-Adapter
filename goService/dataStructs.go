@@ -1,6 +1,8 @@
 package main
 
 type SonnenStatus struct {
+	StatusCode                int
+	Status                    string
 	Apparent_output           int
 	BackupBuffer              string
 	BatteryCharging           bool
@@ -72,10 +74,4 @@ type SiteMeters struct {
 	battery_soc float32 //eg 0.5 = 50%
 	//[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 	battery_energy_kwh float32 //amount of energy in the battery (optional)
-}
-type httpError struct {
-	method     string
-	url        string
-	status     string
-	statusCode int
 }
