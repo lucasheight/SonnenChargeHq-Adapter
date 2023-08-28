@@ -79,11 +79,11 @@ func publishData(data SonnenStatus, er error, statusCode int) (error, *httpError
 		charge["siteMeters"] = meters
 	}
 	var postBuffer bytes.Buffer
-	er = json.NewEncoder(&postBuffer).Encode(&charge)
+	er = json.NewEncoder(&postBuffer).Encode(charge)
 	if er != nil {
 		return er, nil
 	}
-	h := &http.Client{}
+	h := http.Client{}
 	var endpointUrl = ChargeHqBaseUrl + "/api/public/push-solar-data"
 	resp, e := h.Post(endpointUrl, "application/json", &postBuffer)
 	if e != nil {
@@ -98,7 +98,7 @@ func publishData(data SonnenStatus, er error, statusCode int) (error, *httpError
 	return nil, nil
 }
 func readSonnen() (SonnenStatus, error, int) {
-	sonnenClient := &http.Client{}
+	sonnenClient := http.Client{}
 	var req *http.Response
 	var err error
 	var theUrl = getEnv(SonnenBaseUrl) + "/api/v2/status/"
@@ -108,14 +108,14 @@ func readSonnen() (SonnenStatus, error, int) {
 		return SonnenStatus{}, err, req.StatusCode
 	}
 	defer req.Body.Close()
-	sonnenData := new(SonnenStatus)
+	sonnenData := SonnenStatus{}
 	dec := json.NewDecoder(req.Body)
 	err = dec.Decode(&sonnenData)
 	if err != nil {
 		req.StatusCode = 500
 	}
-	info.Printf("Sonnen data read: %+v \n", *sonnenData)
-	return *sonnenData, err, req.StatusCode
+	info.Printf("Sonnen data read: %+v \n", sonnenData)
+	return sonnenData, err, req.StatusCode
 }
 func mapData(data SonnenStatus, err error) ChargeHq {
 	ch := new(ChargeHq)
