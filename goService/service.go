@@ -2,14 +2,14 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"encoding/json"
+	"fmt"
+	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
-	"github.com/joho/godotenv"
 )
 
 var (
@@ -70,14 +70,14 @@ func post(data SonnenStatus) {
 		return ch
 	}()
 	charge := map[string]interface{}{
-		"apiKey": mapped.apiKey
+		"apiKey": mapped.apiKey,
 	}
 	meters := map[string]interface{}{
 		"consumption_kw":       mapped.siteMeters.consumption_kw,
 		"production_kw":        mapped.siteMeters.production_kw,
 		"net_import_kw":        mapped.siteMeters.net_import_kw,
 		"battery_soc":          mapped.siteMeters.battery_soc,
-		"battery_discharge_kw": mapped.siteMeters.battery_discharge_kw
+		"battery_discharge_kw": mapped.siteMeters.battery_discharge_kw,
 	}
 
 	charge["siteMeters"] = meters
@@ -105,7 +105,7 @@ func get(read chan<- SonnenStatus, url string) {
 	sonnenClient := http.Client{}
 	var req *http.Response
 	var err error
-	var theUrl = getEnv(SonnenBaseUrl) + url 
+	var theUrl = getEnv(SonnenBaseUrl) + url
 	req, err = sonnenClient.Get(theUrl)
 	sonnenData := SonnenStatus{}
 	if err != nil {
