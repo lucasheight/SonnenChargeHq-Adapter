@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 var (
@@ -117,7 +118,14 @@ func get(read chan<- SonnenStatus, url string) {
 	sonnenData.StatusCode = req.StatusCode
 	sonnenData.Status = req.Status
 	defer req.Body.Close()
+	if req.Header.Get("Content-Type") != "application/json" {
+		sonnenData.StatusCode = 400
+		sonnenData.Status = "Bad request-The response body is not json!. Will skip this one!"
+		read <- sonnenData
+		return
+	}
 	dec := json.NewDecoder(req.Body)
+
 	decError := dec.Decode(&sonnenData)
 	if decError != nil {
 		warn.Printf("Serialisation Error: %s \n", decError.Error())
