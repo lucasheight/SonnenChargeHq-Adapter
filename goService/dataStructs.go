@@ -1,14 +1,14 @@
 package main
 
 type SonnenStatus struct {
-	StatusCode                int
+	StatusCode                float32
 	Status                    string
-	Apparent_output           int
+	Apparent_output           float32
 	BackupBuffer              string
 	BatteryCharging           bool
 	BatteryDischarging        bool
-	Consumption_Avg           int
-	Consumption_W             int
+	Consumption_Avg           float32
+	Consumption_W             float32
 	Fac                       float32
 	FlowConsumptionBattery    bool
 	FlowConsumptionGrid       bool
@@ -16,21 +16,21 @@ type SonnenStatus struct {
 	FlowGridBattery           bool
 	FlowProductionBattery     bool
 	FlowProductionGrid        bool
-	GridFeedIn_W              int
-	IsSystemInstalled         int
+	GridFeedIn_W              float32
+	IsSystemInstalled         float32
 	OperatingMode             string
-	Pac_total_W               int
-	Production_W              int
-	RSOC                      int
-	RemainingCapacity_Wh      int
-	Sac1                      int
-	Sac2                      int
-	Sac3                      int
+	Pac_total_W               float32
+	Production_W              float32
+	RSOC                      float32
+	RemainingCapacity_Wh      float32
+	Sac1                      float32
+	Sac2                      float32
+	Sac3                      float32
 	SystemStatus              string
 	Timestamp                 string
-	USOC                      int
-	Uac                       int
-	Ubat                      int
+	USOC                      float32
+	Uac                       float32
+	Ubat                      float32
 	dischargeNotAllowed       bool
 	generator_autostart       bool
 }

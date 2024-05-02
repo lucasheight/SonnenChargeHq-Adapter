@@ -48,7 +48,7 @@ func worker() {
 	select {
 	case res := <-read:
 		if res.StatusCode != 200 {
-			warn.Printf("GET-%d: %+v \n", res.StatusCode, res.Status)
+			warn.Printf("GET-%f: %+v \n", res.StatusCode, res.Status)
 		} else {
 			info.Printf("Sonnen data read: %+v \n", res)
 			//now post it
@@ -115,7 +115,7 @@ func get(read chan<- SonnenStatus, url string) {
 		read <- sonnenData
 		return
 	}
-	sonnenData.StatusCode = req.StatusCode
+	sonnenData.StatusCode =float32(req.StatusCode)
 	sonnenData.Status = req.Status
 	defer req.Body.Close()
 	if req.Header.Get("Content-Type") != "application/json" {
