@@ -44,7 +44,7 @@ func poll() {
 }
 func worker() {
 	read := make(chan SonnenStatus)
-	go get(read, "/api/v2/status/")
+	go get(read, "/api/v2/status")
 	select {
 	case res := <-read:
 		if res.StatusCode != 200 {
